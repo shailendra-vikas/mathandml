@@ -1,7 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
-
+from sklearn.linear_model import LinearRegression
 
 # https://en.wikipedia.org/wiki/Hurst_exponent
 def get_returns(ticker='^GSPC', start='2015-12-31', end='2021-06-16'):
@@ -48,12 +46,14 @@ def calculate_hurst(data):
 
     log_n = np.log(np.array(sorted_n))
     log_R_S = np.log(np.array(average_R_S))
-
-    reg = sm.OLS(log_R_S, sm.add_constant(log_n))
-    res = reg.fit()
-    hurst = res.params[1]
+    lr = LinearRegression()
+    print(log_n)
+    print(log_R_S)
+    reg = lr.fit(log_n.reshape(-1,1), log_R_S)
+    hurst = reg.coef_[0]
     print('Hurst Exponent=', hurst)
     return 
+    import matplotlib.pyplot as plt
     fig, (ax1, ax2) = plt.subplots(2,1)
     ax1.plot(range(N), np.cumsum(data), '-')
     for n, list_of_R_S in all_R_S.items():
@@ -63,27 +63,9 @@ def calculate_hurst(data):
     ax2.plot(sorted_n, np.exp(res.params[0])*np.array(sorted_n)**res.params[1],'-', color='green')
     plt.show()
 
-def calculate_hurst2(input_ts, lags_to_test=20):
-    tau = []
-    lagvec = []  
-    #  Step through the different lags  
-    for lag in range(2, lags_to_test):  
-        #  produce price difference with lag  
-        pp = np.subtract(input_ts[lag:], input_ts[:-lag])  
-        #  Write the different lags into a vector  
-        lagvec.append(lag)  
-        #  Calculate the variance of the differnce vector  
-        tau.append(np.sqrt(np.var(pp)))  
-    #  linear fit to double-log graph (gives power)  
-    m = np.polyfit(np.log10(lagvec), np.log10(tau), 1)  
-    # calculate hurst  
-    hurst = m[0]*2
-    print(hurst)
-
     
 if __name__=='__main__':
     #data = get_returns()
-    data = get_randomwalk(factor=-1.0)
+    data = get_randomwalk(factor=0.0)
     calculate_hurst(data)
-    calculate_hurst2(data.cumsum())
-
+    
